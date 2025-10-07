@@ -17,16 +17,33 @@ WORKDIR /app
 
 # Копируем файлы для установки зависимостей
 COPY Frontend/package.json Frontend/pnpm-lock.yaml ./
-COPY Frontend/pnpm-workspace.yaml ./
+
+# Создаем временный pnpm-workspace.yaml без игнорирования @tailwindcss/oxide
+RUN echo "# Пустой workspace для Docker сборки" > pnpm-workspace.yaml
 
 # Устанавливаем все зависимости (включая dev для сборки)
-RUN pnpm install --frozen-lockfile
+# Флаг --ignore-scripts=false гарантирует сборку нативных модулей
+RUN pnpm install --frozen-lockfile --ignore-scripts=false
 
 # Этап 3: Сборка приложения
 FROM base AS builder
 WORKDIR /app
-COPY Frontend/ ./
+
+# Копируем все файлы проекта, кроме node_modules
+COPY Frontend/package.json Frontend/pnpm-lock.yaml ./
+COPY Frontend/nuxt.config.ts Frontend/tsconfig.json ./
+COPY Frontend/eslint.config.mjs ./
+COPY Frontend/app ./app
+COPY Frontend/server ./server
+COPY Frontend/public ./public
+
+# Копируем установленные зависимости
 COPY --from=deps /app/node_modules ./node_modules
+
+# Создаем пустой pnpm-workspace.yaml для сборки
+RUN echo "# Пустой workspace для Docker сборки" > pnpm-workspace.yaml
+
+# Собираем приложение
 RUN pnpm run build
 
 # Этап 4: Production образ (минимальный)
