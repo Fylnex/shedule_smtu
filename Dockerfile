@@ -22,8 +22,11 @@ COPY Frontend/package.json Frontend/pnpm-lock.yaml ./
 RUN echo "# Пустой workspace для Docker сборки" > pnpm-workspace.yaml
 
 # Устанавливаем все зависимости (включая dev для сборки)
-# Флаг --ignore-scripts=false гарантирует сборку нативных модулей
-RUN pnpm install --frozen-lockfile --ignore-scripts=false
+# Используем --no-frozen-lockfile чтобы pnpm мог разрешить зависимости без workspace ограничений
+RUN pnpm install --no-frozen-lockfile
+
+# Устанавливаем tailwindcss явно, если его нет
+RUN pnpm add -D tailwindcss@latest || true
 
 # Этап 3: Сборка приложения
 FROM base AS builder
