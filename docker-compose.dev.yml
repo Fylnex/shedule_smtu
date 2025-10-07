@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Development версия приложения
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+    container_name: shedule_smtu_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3000
+    command: pnpm run dev
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
